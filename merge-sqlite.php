@@ -336,6 +336,16 @@ class merge_sqlite
 		}
 	}
 
+	public function query_value( $sql ) {
+		$rows = $this->query( $sql );
+		if ( $rows ) {
+			foreach ( $rows as $row ) {
+				return reset( $row );
+			}
+		}
+		return null;
+	}
+
 	public function return_error( $message ) {
 		$this->messages[] = $message;
 		$this->done = true;
