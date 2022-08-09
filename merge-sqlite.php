@@ -23,6 +23,7 @@ class merge_sqlite
 		'merge_meta', // Merge old stats meta with new stats meta.
 		'merge_short_term', // Convert meta ID's from short term records.
 		'merge_long_term', // Pull long term stats from new database and convert meta.
+		'cleanup', // Remove merge table.
 	);
 	public $steps_done = array();
 	public $interval = array();
@@ -117,6 +118,7 @@ class merge_sqlite
 			return true;
 		}
 
+		// @todo Maybe remove table?
 		$done = $this->pdo->table_exists( $this->merge_table );
 		if ( $done ) {
 			$this->steps_done[ $step ] = true;
@@ -519,6 +521,18 @@ class merge_sqlite
 		}
 
 		return $id;
+	}
+
+	public function cleanup() {
+		$step = $this->step;
+		$done = $this->steps_done[ $step ] ?? null;
+		if ( true === $done ) {
+			return true;
+		}
+
+		$this->pdo->exec( "DROP TABLE {$this->meta_table}" );
+
+		$this->steps_done[ $step ] = true;
 	}
 
 	public function return_error( $message ) {
