@@ -32,6 +32,7 @@ class merge_sqlite
 	public function run( $steps_done = array(), $interval = null, $sums = null ) {
 		$this->steps_done = $steps_done;
 		$this->interval   = $interval ?? 1000;
+		$this->sums       = $sums ?? array();
 
 		// Prepare DB instance.
 		if ( ! $this->pdo instanceof PDO ) {
