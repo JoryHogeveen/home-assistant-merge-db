@@ -432,6 +432,12 @@ class merge_sqlite
 
 		$results     = $this->pdo->query( "SELECT * FROM db_new.{$table} LIMIT {$limit} OFFSET {$offset}" );
 		$num_results = 0;
+
+		$message_data = array(
+			'db'             => $this->db,
+			'recalculations' => array(),
+		);
+
 		foreach ( $results as $row ) {
 			$num_results++;
 			unset( $row['id'] );
@@ -440,11 +446,30 @@ class merge_sqlite
 			// Recalculate sum.
 			if ( ! empty( $this->sums[ $row['metadata_id'] ] ) ) {
 				$row['sum'] = $this->sums[ $row['metadata_id'] ]['sum'] + (float) $row['sum'];
+
+				$statistic_id = $this->sums[ $row['metadata_id'] ]['statistic_id'];
+				$data_key     = $statistic_id . ' (' . $row['metadata_id'] . ')';
+				if ( ! isset( $message_data['recalculations'][ $data_key ] ) ) {
+					$message_data['recalculations'][ $data_key ] = 0;
+				}
+				$message_data['recalculations'][ $data_key ]++;
 			}
 
 			$insert = $this->pdo->sql_insert( $row );
 
 			$this->pdo->exec( "INSERT INTO main.{$table} {$insert}" );
+		}
+
+		foreach ( $message_data as $key => $value ) {
+			if ( 'recalculations' === $key && $value ) {
+				$message_data[ $key ] = array(
+					'Recalculations:'
+				);
+				foreach ( $value as $id => $count ) {
+					$message_data[ $key ][] = $id . ' > ' . $count;
+				}
+				$message_data[ $key ] = implode( '<br>', $message_data[ $key ] );
+			}
 		}
 
 		if ( $num_results < $this->interval ) {
@@ -455,7 +480,7 @@ class merge_sqlite
 				'step'    => $step,
 				'done'    => true,
 				'message' => $table . ' all ' . $total . ' entities merged',
-				'data'    => $this->db,
+				'data'    => implode( '<br>', $message_data ),
 			);
 
 			$this->steps_done[ $step ] = true;
@@ -468,7 +493,7 @@ class merge_sqlite
 				'step'    => $step,
 				'done'    => $done,
 				'message' => "{$table} entities {$offset} to {$entities_done} merged",
-				'data'    => $this->db,
+				'data'    => implode( '<br>', $message_data ),
 			);
 
 			$this->steps_done[ $step ] = $done;
