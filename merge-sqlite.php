@@ -135,7 +135,6 @@ class merge_sqlite
 	public function init_stats() {
 		$step = $this->step;
 		$done = $this->steps_done[ $step ] ?? null;
-
 		if ( true === $done ) {
 			return true;
 		}
@@ -181,7 +180,6 @@ class merge_sqlite
 	public function init_sums() {
 		$step = $this->step;
 		$done = $this->steps_done[ $step ] ?? null;
-
 		if ( true === $done ) {
 			return true;
 		}
@@ -296,7 +294,6 @@ class merge_sqlite
 	public function merge_meta() {
 		$step = $this->step;
 		$done = $this->steps_done[ $step ] ?? null;
-
 		if ( true === $done ) {
 			return true;
 		}
@@ -304,7 +301,7 @@ class merge_sqlite
 		$this->pdo->exec( "ATTACH `{$this->new}` as db_new" );
 
 		$meta_table = 'statistics_meta';
-		$main_meta_table = 'main.statistics_meta';
+		$main_meta_table = 'main.' . $meta_table;
 
 		$current = $this->pdo->query( "SELECT * FROM {$main_meta_table}" );
 		$results = $this->pdo->query( "SELECT * FROM db_new.{$meta_table}" );
