@@ -15,7 +15,7 @@ class db_sqlite
 	}
 
 	public function sql_update( $row ) {
-		$row = $this->pdo->sql_parse_row( $row );
+		$row = $this->sql_parse_row( $row );
 
 		$update = array();
 		foreach ( $row as $key => $value ) {
@@ -27,7 +27,7 @@ class db_sqlite
 	}
 
 	public function sql_insert( $row ) {
-		$row     = $this->pdo->sql_parse_row( $row );
+		$row     = $this->sql_parse_row( $row );
 		$columns = array_keys( $row );
 
 		$columns = implode( ',', $columns );
