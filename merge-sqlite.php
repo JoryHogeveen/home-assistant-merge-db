@@ -7,6 +7,8 @@ class merge_sqlite
 
 	public $pdo = null;
 
+	public $merge_table = 'statistics_merge';
+
 	/**
 	 * Constructor
 	 */
@@ -44,6 +46,56 @@ class merge_sqlite
 		);
 
 		return true;
+	}
+
+	/**
+	 * Create merge table.
+	 */
+	public function init_merge() {
+		$step = $this->step;
+		$done = $this->steps_done[ $step ] ?? null;
+		if ( true === $done ) {
+			return true;
+		}
+
+		$done = $this->table_exists( $this->merge_table );
+		if ( $done ) {
+			$this->steps_done[ $step ] = true;
+			return true;
+		}
+
+		$this->exec( "CREATE TABLE {$this->merge_table} (
+			id INTEGER NOT NULL,
+			id_org INTEGER NOT NULL,
+			statistic_id VARCHAR(255),
+			PRIMARY KEY (id)
+		)" );
+
+		$this->messages[] = array(
+			'step'    => $step,
+			'message' => 'Table created',
+			'data'    => $this->merge_table,
+			'done'    => true,
+		);
+
+		$this->steps_done[ $step ] = true;
+	}
+
+	public function table_exists( $table ) {
+		$tables = $this->list_tables();
+		return in_array( $table, $tables, true );
+	}
+
+	public function list_tables() {
+		$results = $this->pdo->query( "SELECT name FROM sqlite_master WHERE type='table'" );
+		$return = array();
+
+		if ( $results ) {
+			foreach ( $results as $row ) {
+				$return[] = $row['name'];
+			}
+		}
+		return $return;
 	}
 	}
 }
