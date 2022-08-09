@@ -122,6 +122,11 @@ $files = array_filter( $files, function( $item ) {
 			<?php endforeach; ?>
 		</select>
 	</div>
+
+	<div class="form-group">
+		<label for="interval">Interval:</label>
+		<input class="form-control" type="number" name="interval" id="interval" value="1000">
+	</div>
 </form>
 
 
