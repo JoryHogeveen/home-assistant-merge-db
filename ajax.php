@@ -20,8 +20,9 @@ if ( ! empty( $_POST[ 'db_new' ] ) && ! empty( $_POST[ 'db_old' ] ) ) {
 	$old        = $_POST[ 'db_old' ];
 	$db         = $_POST[ 'db' ] ?? null;
 	$interval   = $_POST[ 'interval' ] ?? null;
-	$steps_done = $_POST[ 'steps_done' ] ?? array();
 	$sums       = $_POST[ 'sums' ] ?? array();
+	$steps      = $_POST[ 'steps' ] ?? array();
+	$steps_done = $_POST[ 'steps_done' ] ?? array();
 
 	if ( ! is_array( $steps_done ) ) {
 		$steps_done = json_decode( $_POST[ 'steps_done' ] );
@@ -40,7 +41,7 @@ if ( ! empty( $_POST[ 'db_new' ] ) && ! empty( $_POST[ 'db_old' ] ) ) {
 	require_once 'merge-sqlite.php';
 
 	$merge = new merge_sqlite( $new, $old, $db );
-	$merge->run( $steps_done, $interval, $sums );
+	$merge->run( $steps_done, $interval, $sums, $steps );
 
 	$return = get_object_vars( $merge );
 
