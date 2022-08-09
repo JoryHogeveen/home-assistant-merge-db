@@ -36,6 +36,7 @@ class merge_sqlite
 			$steps = array(
 				'init_merge', // Create merge table.
 				'init_stats', // Truncate tables and cCopy old statistics and meta.
+				'merge_meta', // Merge old stats meta with new stats meta.
 			);
 		}
 
@@ -154,6 +155,54 @@ class merge_sqlite
 
 			$this->steps_done[ $step ] = true;
 		}
+	}
+
+	/**
+	 * Merge statistics metadata and update merge table.
+	 */
+	public function merge_meta() {
+		$step = $this->step;
+		$done = $this->steps_done[ $step ] ?? null;
+
+		if ( true === $done ) {
+			return true;
+		}
+
+		$this->exec( "ATTACH `{$this->new}` as db_new" );
+
+		$meta_table = 'statistics_meta';
+		$main_meta_table = 'main.statistics_meta';
+
+		$current = $this->query( "SELECT * FROM {$main_meta_table}" );
+		$results = $this->query( "SELECT * FROM db_new.{$meta_table}" );
+
+		$existing = array();
+		foreach ( $current as $row ) {
+			$existing[ $row['statistic_id'] ] = $row;
+		}
+
+		foreach ( $results as $result ) {
+			$org_id       = $result['id'];
+			$statistic_id = $result['statistic_id'];
+
+			$row = $result;
+			unset( $row[ 'id' ] ); // Should not be used.
+
+			if ( isset( $existing[ $statistic_id ] ) ) {
+				// Exists already.
+			} else {
+				// New entity.
+			}
+		}
+
+		$this->messages[] = array(
+			'step'    => $step,
+			'done'    => true,
+			'message' => 'statistics_meta entities merged',
+			'data'    => $this->db,
+		);
+
+		$this->steps_done[ $step ] = true;
 	}
 
 	public function table_exists( $table ) {
