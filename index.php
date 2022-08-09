@@ -27,6 +27,16 @@ $files = array_filter( $files, function( $item ) {
 			<?php endforeach; ?>
 		</select>
 	</div>
+
+	<div class="form-group">
+		<label for="db">DB (CONTINUE):</label>
+		<select class="form-control" name="db" id="db">
+			<option value=""> - only select if you want to continue existing merge - </option>
+			<?php foreach ( $files as $file ) : ?>
+				<option value="<?= $file ?>"><?= $file ?></option>
+			<?php endforeach; ?>
+		</select>
+	</div>
 </form>
 
 
