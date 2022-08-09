@@ -117,7 +117,7 @@ $files = array_filter( $files, function( $item ) {
 } );
 ?>
 <div class="p-3 container">
-<form id="form">
+<form id="form" method="post">
   	<div class="form-group">
 		<label for="db_old">DB OLD:</label>
 		<select class="form-control" name="db_old" id="db_old">
