@@ -190,11 +190,6 @@ class merge_sqlite
 			return true;
 		}
 
-		// Convert user input.
-		if ( ! is_array( $this->sums ) ) {
-			$this->sums = array_filter( array_map( 'trim', preg_split( '/\r\n|[\r\n]|,/', $this->sums ) ) );
-		}
-
 		$this->pdo->exec( "ATTACH `{$this->new}` as db_new" );
 
 		foreach ( $this->sums as $statistic_id => $data ) {

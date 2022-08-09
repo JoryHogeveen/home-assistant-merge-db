@@ -18,6 +18,10 @@ if ( ! empty( $_POST[ 'db_new' ] ) && ! empty( $_POST[ 'db_old' ] ) ) {
 		}
 	}
 
+	if ( ! is_array( $sums ) ) {
+		$sums = array_filter( array_map( 'trim', preg_split( '/\r\n|[\r\n]|,/', $sums ) ) );
+	}
+
 	require_once 'merge-sqlite.php';
 
 	$merge  = new merge_sqlite( $new, $old, $db );
