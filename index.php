@@ -84,11 +84,30 @@
 						steps_done = resp.steps_done;
 					}
 
-					if ( resp.hasOwnProperty( 'messages' ) ) {
+					if ( resp.hasOwnProperty( 'messages' ) && resp.messages ) {
 						var table = $('#status tbody');
 						$.each( resp.messages, function( key, value ) {
-							var row = '<tr><td>' + value.step + '</td><td>' + value.message + '</td><td>' + value.data + '</td><td>' + value.done + '</td></tr>';
-							table.prepend( row );
+
+							var classes = '',
+								row = '',
+								log = '',
+								key = Date.now();
+
+							classes += ( value.done ) ? 'table-success' : 'table-warning';
+
+							classes = ' class="' + classes + '"';
+
+							row += '<th scope="row">' + value.step + '</th>';
+							row += '<td>' + value.message + '</td>';
+							row += '<td>' + value.data + log + '</td>';
+							row += '<td' + classes + '>' + value.done + '</td>';
+
+							table.prepend( '<tr>' + row + '</tr>' );
+
+							$( '#toggle-' + key ).on( 'click', function(e) {
+								e.preventDefault();
+								$( $(this).data('target') ).slideToggle();
+							} );
 						} );
 					}
 
@@ -208,12 +227,12 @@ $files = array_filter( $files, function( $item ) {
 
 <hr>
 
-<table id="status" class="table text-left">
-	<thead>
-		<th>Step</th>
-		<th>Message</th>
-		<th>Data</th>
-		<th>Interval/Done</th>
+<table id="status" class="table table-bordered table-hover text-left">
+	<thead class="thead-dark">
+		<th scope="col">Step</th>
+		<th scope="col">Message</th>
+		<th scope="col">Data</th>
+		<th scope="col">Interval/Done</th>
 	</thead>
 	<tbody>
 	</tbody>
