@@ -6,6 +6,7 @@ if ( ! empty( $_POST[ 'db_new' ] ) && ! empty( $_POST[ 'db_old' ] ) ) {
 	$db         = $_POST[ 'db' ] ?? null;
 	$interval   = $_POST[ 'interval' ] ?? null;
 	$steps_done = $_POST[ 'steps_done' ] ?? array();
+	$sums       = $_POST[ 'sums' ] ?? array();
 
 	if ( ! is_array( $steps_done ) ) {
 		$steps_done = json_decode( $_POST[ 'steps_done' ] );
