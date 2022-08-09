@@ -400,8 +400,7 @@ class merge_sqlite
 	 * Copy and convert short term statistics (convert metadata ID).
 	 */
 	public function merge_short_term() {
-		$this->pdo->truncate_table( 'main.statistics_short_term' );
-		return $this->merge_records( 'statistics_short_term' );
+		return $this->merge_records( 'statistics_short_term', true );
 	}
 
 	/**
@@ -414,7 +413,7 @@ class merge_sqlite
 	/**
 	 * Copy and convert statistics (convert metadata ID).
 	 */
-	public function merge_records( $table ) {
+	public function merge_records( $table, $truncate = false ) {
 		$step = $this->step;
 		$done = $this->steps_done[ $step ] ?? null;
 		if ( true === $done ) {
@@ -423,7 +422,11 @@ class merge_sqlite
 
 		$this->pdo->exec( "ATTACH `{$this->new}` as db_new" );
 
-		if ( ! $done ) {
+		if ( ! is_numeric( $done ) ) {
+			// First iteration.
+			if ( $truncate ) {
+				$this->pdo->truncate_table( 'main.' . $table );
+			}
 			$done = 0;
 		}
 
