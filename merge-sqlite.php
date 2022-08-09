@@ -57,8 +57,15 @@ class merge_sqlite
 				$this->step = $step;
 				$done = call_user_func( array( $this, $step ) );
 				if ( true !== $done ) {
-					return;
+					return; // Continue next iteration.
 				}
+			} else {
+				return $this->return_error( array(
+					'step'    => 'run',
+					'message' => 'No valid callback for step.',
+					'data'    => $step,
+					'done'    => false,
+				) );
 			}
 		}
 
