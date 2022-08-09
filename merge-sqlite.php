@@ -198,5 +198,36 @@ class merge_sqlite
 		// "TRUNCATE TABLE {$table}"
 		$this->pdo->exec( "DELETE FROM {$table}" );
 	}
+
+	public function exec( $sql ) {
+		try {
+			return $this->pdo->exec( $sql );
+		} catch ( Exception $e ) {
+			return $this->return_error( array(
+				'step'    => $this->step,
+				'message' => 'SQL Exec: ' . $e->getMessage(),
+				'data'    => $sql,
+				'done'    => false,
+			) );
+		}
+	}
+
+	public function query( $sql, $fetchMode = PDO::FETCH_ASSOC ) {
+		try {
+			return $this->pdo->query( $sql, $fetchMode );
+		} catch ( Exception $e ) {
+			return $this->return_error( array(
+				'step'    => $this->step,
+				'message' => 'SQL Query: ' . $e->getMessage(),
+				'data'    => $sql,
+				'done'    => false,
+			) );
+		}
+	}
+
+	public function return_error( $message ) {
+		$this->messages[] = $message;
+		$this->done = true;
+		return false;
 	}
 }
