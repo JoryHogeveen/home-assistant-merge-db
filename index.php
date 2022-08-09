@@ -150,6 +150,12 @@ $files = array_filter( $files, function( $item ) {
 		<label for="interval">Interval:</label>
 		<input class="form-control" type="number" name="interval" id="interval" value="1000">
 	</div>
+
+	<div class="form-group">
+		<label for="sums">Recalculate sums for the following entities (new line per entity):</label>
+		<textarea class="form-control" name="sums"></textarea>
+		<button id="load_entities"></button>
+	</div>
 </form>
 
 

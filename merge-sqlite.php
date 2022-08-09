@@ -29,14 +29,30 @@ class merge_sqlite
 	/**
 	 * Run merge loop.
 	 */
-	public function run( $steps_done = array(), $interval = null ) {
+	public function run( $steps_done = array(), $interval = null, $sums = null ) {
 		$this->steps_done = $steps_done;
 		$this->interval   = $interval ?? 1000;
 
+		// Prepare DB instance.
 		if ( ! $this->pdo instanceof PDO ) {
 			$this->init_db();
 		}
 
+		// Prepare entities for sum recalculation.
+		if ( $sums ) {
+			if ( ! is_array( $sums ) ) {
+				$sums = array_map( 'trim', explode( PHP_EOL, $sums ) );
+			}
+			foreach ( $sums as $sum => $data ) {
+				if ( is_string( $sum ) ) {
+					$this->sums[ $sum ] = $data;
+				} elseif ( is_string( $data ) ) {
+					$this->sums[ $data ] = array();
+				}
+			}
+		}
+
+		// Prepare steps to be made.
 		if ( ! $steps ) {
 			$steps = array(
 				'init_merge', // Create merge table.
