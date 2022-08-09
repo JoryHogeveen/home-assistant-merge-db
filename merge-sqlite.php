@@ -207,7 +207,8 @@ class merge_sqlite
 			}
 
 			// Get the entity meta from the new database.
-			$meta = $this->pdo->query( "SELECT * FROM db_new.statistics_meta WHERE statistic_id = '{$statistic_id}'" );
+			$meta = $this->pdo->query_row( "SELECT * FROM db_new.statistics_meta WHERE statistic_id = '{$statistic_id}'" );
+
 			if ( ! isset( $meta['id'] ) ) {
 				$this->messages[] = array(
 					'step'     => $step,
@@ -244,7 +245,7 @@ class merge_sqlite
 			}
 
 			// Get the entity meta from the original database.
-			$meta = $this->pdo->query( "SELECT * FROM main.statistics_meta WHERE statistic_id = '{$statistic_id}'" );
+			$meta = $this->pdo->query_row( "SELECT * FROM main.statistics_meta WHERE statistic_id = '{$statistic_id}'" );
 			if ( ! isset( $meta['id'] ) ) {
 				$this->messages[] = array(
 					'step'     => $step,
