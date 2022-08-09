@@ -10,11 +10,10 @@ class merge_sqlite
 	public $merge_table = 'statistics_merge';
 
 	public $messages = array();
-	public $steps_done = array();
-	public $interval = array();
-	public $step = '';
 	public $done = false;
-
+	public $steps_done = array();
+	public $step = '';
+	public $interval = array();
 	public $sums = array();
 
 	/**
@@ -63,7 +62,6 @@ class merge_sqlite
 
 		// END.
 		$this->done = true;
-		return;
 	}
 
 	/**
