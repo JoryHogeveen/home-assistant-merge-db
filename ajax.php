@@ -4,7 +4,7 @@ if ( ! empty( $_POST[ 'load_sum_entities' ] ) && ! empty( $_POST[ 'db' ] ) ) {
 	require_once 'db-sqlite.php';
 
 	$db = new db_sqlite( $_POST[ 'db' ] );
-	$results = $db->query( 'SELECT statistic_id FROM statistics_meta WHERE has_sum = 1' );
+	$results = $db->query( 'SELECT * FROM statistics_meta WHERE has_sum = 1' );
 
 	$entities = array();
 	foreach ( $results as $row ) {
