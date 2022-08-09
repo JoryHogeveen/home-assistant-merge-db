@@ -37,6 +37,8 @@ class merge_sqlite
 				'init_merge', // Create merge table.
 				'init_stats', // Truncate tables and cCopy old statistics and meta.
 				'merge_meta', // Merge old stats meta with new stats meta.
+				'merge_short_term', // Convert meta ID's from short term records.
+				'merge_long_term', // Pull long term stats from new database and convert meta.
 			);
 		}
 
@@ -237,6 +239,46 @@ class merge_sqlite
 		$this->steps_done[ $step ] = true;
 	}
 
+	/**
+	 * Copy and convert short term statistics (convert metadata ID).
+	 */
+	public function merge_short_term() {
+		return $this->merge_records( 'statistics_short_term' );
+	}
+
+	/**
+	 * Copy and convert short term statistics (convert metadata ID).
+	 */
+	public function merge_long_term() {
+		return $this->merge_records( 'statistics' );
+	}
+
+	/**
+	 * Copy and convert statistics (convert metadata ID).
+	 */
+	public function merge_records( $table ) {
+		$step = $this->step;
+		$done = $this->steps_done[ $step ] ?? null;
+		if ( true === $done ) {
+			return true;
+		}
+
+		$this->exec( "ATTACH `{$this->new}` as db_new" );
+
+		if ( ! $done ) {
+			$done = 0;
+		}
+
+		$limit = (int) $this->interval;
+		$offset = $done * $limit;
+
+		$results = $this->query( "SELECT * FROM db_new.{$table} LIMIT {$limit} OFFSET {$offset}" );
+
+		$num_results = 0;
+		foreach ( $results as $row ) {
+			$num_results++;
+		}
+	}
 
 	public function sql_update( $row ) {
 		$row = $this->sql_parse_row( $row );
