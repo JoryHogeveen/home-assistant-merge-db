@@ -3,7 +3,7 @@ class merge_sqlite
 {
 	public $new = null;
 	public $old = null;
-	public $db = null;
+	public $db  = null;
 
 	public $pdo = null;
 
@@ -15,22 +15,27 @@ class merge_sqlite
 	public $step = '';
 	public $done = false;
 
+	public $sums = array();
+
 	/**
 	 * Constructor
 	 */
-	public function __construct( $new, $old, $db = null, $steps_done = array(), $interval = null ) {
-		$this->steps_done = $steps_done;
-		$this->interval   = $interval ?? 1000;
-
+	public function __construct( $new = null, $old = null, $db = null ) {
 		$this->new = $new;
 		$this->old = $old;
 		$this->db  = $db;
+	}
 
-		if ( ! $this->db || ! file_exists( dirname( __FILE__ ) . DIRECTORY_SEPARATOR . $this->db ) ) {
+	/**
+	 * Run merge loop.
+	 */
+	public function run( $steps_done = array(), $interval = null ) {
+		$this->steps_done = $steps_done;
+		$this->interval   = $interval ?? 1000;
+
+		if ( ! $this->pdo instanceof PDO ) {
 			$this->init_db();
 		}
-
-		$this->pdo = new PDO( 'sqlite:' . $this->db );
 
 		if ( ! $steps ) {
 			$steps = array(
@@ -61,23 +66,29 @@ class merge_sqlite
 	 * Create (duplicate) DB if not exist.
 	 */
 	public function init_db() {
-		$name = explode( '.', $this->new );
-		$ext = array_pop( $name );
-		$end = array_pop( $name );
-		$end .= '_new-' . time();
-		$name[] = $end;
-		$name[] = $ext;
-		$this->db = implode( '.', $name );
-		copy( $this->new, $this->db );
 
-		$this->db = $this->db;
+		if ( ! $this->db || ! file_exists( dirname( __FILE__ ) . DIRECTORY_SEPARATOR . $this->db ) ) {
+			$name = explode( '.', $this->new );
+			$ext = array_pop( $name );
+			$end = array_pop( $name );
+			$end .= '_new-' . time();
+			$name[] = $end;
+			$name[] = $ext;
+			$this->db = implode( '.', $name );
+			copy( $this->new, $this->db );
 
-		$this->messages[] = array(
-			'step'    => 'init_db',
-			'message' => 'Database copy created',
-			'data'    => $this->new . ' > ' . $this->db,
-			'done'    => true,
-		);
+			$this->db = $this->db;
+
+			$this->messages[] = array(
+				'step'    => 'init_db',
+				'message' => 'Database copy created',
+				'data'    => $this->new . ' > ' . $this->db,
+				'done'    => true,
+			);
+		}
+
+		include 'db_sqlite.php';
+		$this->pdo = new db_sqlite( $this->db, $this );
 
 		return true;
 	}
@@ -92,13 +103,13 @@ class merge_sqlite
 			return true;
 		}
 
-		$done = $this->table_exists( $this->merge_table );
+		$done = $this->pdo->table_exists( $this->merge_table );
 		if ( $done ) {
 			$this->steps_done[ $step ] = true;
 			return true;
 		}
 
-		$this->exec( "CREATE TABLE {$this->merge_table} (
+		$this->pdo->exec( "CREATE TABLE {$this->merge_table} (
 			id INTEGER NOT NULL,
 			id_org INTEGER NOT NULL,
 			statistic_id VARCHAR(255),
@@ -126,14 +137,14 @@ class merge_sqlite
 			return true;
 		}
 
-		$this->exec( "ATTACH `{$this->old}` as db_old" );
+		$this->pdo->exec( "ATTACH `{$this->old}` as db_old" );
 
 		if ( ! is_numeric( $done ) ) {
 			// First step.
 
 			$this->truncate_statistics();
 
-			$this->exec( "INSERT INTO main.statistics SELECT * FROM db_old.statistics" );
+			$this->pdo->exec( "INSERT INTO main.statistics SELECT * FROM db_old.statistics" );
 
 			$this->messages[] = array(
 				'step'     => $step,
@@ -146,7 +157,7 @@ class merge_sqlite
 		} else {
 			// Last step.
 
-			$this->exec( "INSERT INTO main.statistics_meta SELECT * FROM db_old.statistics_meta" );
+			$this->pdo->exec( "INSERT INTO main.statistics_meta SELECT * FROM db_old.statistics_meta" );
 
 			$this->messages[] = array(
 				'step'     => $step,
@@ -170,15 +181,15 @@ class merge_sqlite
 			return true;
 		}
 
-		$this->exec( "ATTACH `{$this->new}` as db_new" );
+		$this->pdo->exec( "ATTACH `{$this->new}` as db_new" );
 
 		$meta_table = 'statistics_meta';
 		$main_meta_table = 'main.statistics_meta';
 
-		$current = $this->query( "SELECT * FROM {$main_meta_table}" );
-		$results = $this->query( "SELECT * FROM db_new.{$meta_table}" );
+		$current = $this->pdo->query( "SELECT * FROM {$main_meta_table}" );
+		$results = $this->pdo->query( "SELECT * FROM db_new.{$meta_table}" );
 
-		$this->truncate_table( $this->merge_table );
+		$this->pdo->truncate_table( $this->merge_table );
 
 		if ( ! $results ) {
 			return $this->return_error( array(
@@ -214,19 +225,19 @@ class merge_sqlite
 				// Exists already.
 				$id     = $existing[ $statistic_id ]['id'];
 
-				$update = $this->sql_update( $row );
+				$update = $this->pdo->sql_update( $row );
 
-				$this->exec( "UPDATE {$main_meta_table} SET {$update} WHERE id = {$id}" );
+				$this->pdo->exec( "UPDATE {$main_meta_table} SET {$update} WHERE id = {$id}" );
 			} else {
 				// New entity.
-				$insert = $this->sql_insert( $row );
+				$insert = $this->pdo->sql_insert( $row );
 
-				$this->exec( "INSERT INTO {$main_meta_table} {$insert}" );
+				$this->pdo->exec( "INSERT INTO {$main_meta_table} {$insert}" );
 
-				$id = $this->query_value( "SELECT id FROM {$main_meta_table} WHERE statistic_id = '{$statistic_id}'" );
+				$id = $this->pdo->query_value( "SELECT id FROM {$main_meta_table} WHERE statistic_id = '{$statistic_id}'" );
 			}
 
-			$this->exec( "INSERT INTO {$this->merge_table} VALUES ( {$id}, {$org_id}, '{$statistic_id}' )" );
+			$this->pdo->exec( "INSERT INTO {$this->merge_table} VALUES ( {$id}, {$org_id}, '{$statistic_id}' )" );
 		}
 
 		$this->messages[] = array(
@@ -263,7 +274,7 @@ class merge_sqlite
 			return true;
 		}
 
-		$this->exec( "ATTACH `{$this->new}` as db_new" );
+		$this->pdo->exec( "ATTACH `{$this->new}` as db_new" );
 
 		if ( ! $done ) {
 			$done = 0;
@@ -272,21 +283,21 @@ class merge_sqlite
 		$limit = (int) $this->interval;
 		$offset = $done * $limit;
 
-		$results     = $this->query( "SELECT * FROM db_new.{$table} LIMIT {$limit} OFFSET {$offset}" );
+		$results     = $this->pdo->query( "SELECT * FROM db_new.{$table} LIMIT {$limit} OFFSET {$offset}" );
 		$num_results = 0;
 		foreach ( $results as $row ) {
 			$num_results++;
 			unset( $row['id'] );
 			$row['metadata_id'] = $this->convert_id( $row['metadata_id'] );
 
-			$insert = $this->sql_insert( $row );
+			$insert = $this->pdo->sql_insert( $row );
 
-			$this->exec( "INSERT INTO main.{$table} {$insert}" );
+			$this->pdo->exec( "INSERT INTO main.{$table} {$insert}" );
 		}
 
 		if ( $num_results < $this->interval ) {
 			// Less records than the interval, must be the latest iteration.
-			$total = $this->query_num_rows( 'db_new.' . $table );
+			$total = $this->pdo->query_num_rows( 'db_new.' . $table );
 
 			$this->messages[] = array(
 				'step'    => $step,
@@ -314,7 +325,7 @@ class merge_sqlite
 
 	public function convert_id( $id_org, $context = null ) {
 		$sql = "SELECT id FROM main.statistics_merge WHERE id_org = {$id_org}";
-		$id  = $this->query_value( $sql );
+		$id  = $this->pdo->query_value( $sql );
 
 		if ( ! $id ) {
 			$this->return_error( array(
@@ -328,64 +339,6 @@ class merge_sqlite
 		}
 
 		return $id;
-	}
-
-	public function sql_update( $row ) {
-		$row = $this->sql_parse_row( $row );
-
-		$update = array();
-		foreach ( $row as $key => $value ) {
-			$update[] = $key . ' = ' . $value;
-		}
-		$update  = implode( ', ', $update );
-
-		return $update;
-	}
-
-	public function sql_insert( $row ) {
-		$row     = $this->sql_parse_row( $row );
-		$columns = array_keys( $row );
-
-		$columns = implode( ',', $columns );
-		$values  = implode( ',', $row );
-
-		return "({$columns}) VALUES ({$values})";
-	}
-
-	public function sql_parse_row( $row ) {
-		foreach ( $row as $key => $value ) {
-			if ( is_numeric( $value ) ) {
-				$value = (float) $value;
-				if ( $value == (int) $value ) {
-					$value = (int) $value;
-				}
-				$row[ $key ] = $value;
-			} else {
-				if ( $value ) {
-					$row[ $key ] = '"' . $value . '"';
-				} else {
-					$row[ $key ] = 'NULL';
-				}
-			}
-		}
-		return $row;
-	}
-
-	public function table_exists( $table ) {
-		$tables = $this->list_tables();
-		return in_array( $table, $tables, true );
-	}
-
-	public function list_tables() {
-		$results = $this->pdo->query( "SELECT name FROM sqlite_master WHERE type='table'" );
-		$return = array();
-
-		if ( $results ) {
-			foreach ( $results as $row ) {
-				$return[] = $row['name'];
-			}
-		}
-		return $return;
 	}
 
 	public function truncate_statistics() {
@@ -407,52 +360,6 @@ class merge_sqlite
 			'done'    => 0,
 		);
 		return true;
-	}
-
-	public function truncate_table( $table ) {
-		// "TRUNCATE TABLE {$table}"
-		$this->pdo->exec( "DELETE FROM {$table}" );
-	}
-
-	public function exec( $sql ) {
-		try {
-			return $this->pdo->exec( $sql );
-		} catch ( Exception $e ) {
-			return $this->return_error( array(
-				'step'    => $this->step,
-				'message' => 'SQL Exec: ' . $e->getMessage(),
-				'data'    => $sql,
-				'done'    => false,
-			) );
-		}
-	}
-
-	public function query( $sql, $fetchMode = PDO::FETCH_ASSOC ) {
-		try {
-			return $this->pdo->query( $sql, $fetchMode );
-		} catch ( Exception $e ) {
-			return $this->return_error( array(
-				'step'    => $this->step,
-				'message' => 'SQL Query: ' . $e->getMessage(),
-				'data'    => $sql,
-				'done'    => false,
-			) );
-		}
-	}
-
-	public function query_value( $sql ) {
-		$rows = $this->query( $sql );
-		if ( $rows ) {
-			foreach ( $rows as $row ) {
-				return reset( $row );
-			}
-		}
-		return null;
-	}
-
-	public function query_num_rows( $table ) {
-		$results = $this->pdo->query( "SELECT COUNT(*) FROM {$table}", PDO::FETCH_NUM )->fetch();
-		return reset( $results );
 	}
 
 	public function return_error( $message ) {
