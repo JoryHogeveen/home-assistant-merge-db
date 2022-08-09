@@ -212,6 +212,15 @@ class merge_sqlite
 				$this->messages[] = array(
 					'step'     => $step,
 					'message'  => 'New entity for sum calculation not found, skip recalculation',
+					'data'     => 'db_new.statistics_meta > ' . $statistic_id . var_export( $meta, true ),
+					'done'     => null,
+				);
+				continue;
+			}
+			if ( empty( $meta['has_sum'] ) ) {
+				$this->messages[] = array(
+					'step'     => $step,
+					'message'  => 'New entity does not support sum',
 					'data'     => 'db_new.statistics_meta > ' . $statistic_id,
 					'done'     => null,
 				);
@@ -241,6 +250,15 @@ class merge_sqlite
 					'step'     => $step,
 					'message'  => 'Original entity for sum calculation not found, skip recalculation',
 					'data'     => 'main.statistics_meta > ' . $statistic_id,
+					'done'     => null,
+				);
+				continue;
+			}
+			if ( empty( $meta['has_sum'] ) ) {
+				$this->messages[] = array(
+					'step'     => $step,
+					'message'  => 'Original entity does not support sum',
+					'data'     => 'db_new.statistics_meta > ' . $statistic_id,
 					'done'     => null,
 				);
 				continue;
