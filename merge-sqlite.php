@@ -191,25 +191,9 @@ class merge_sqlite
 			return true;
 		}
 
-		// Prepare entities for sum recalculation.
-		if ( $sums ) {
-			foreach ( $sums as $sum => $data ) {
-				if ( is_numeric( $sum ) && is_array( $data ) ) {
-					// Done!
-
-					break;
-				} else {
-					if ( is_string( $sum ) ) {
-						$this->sums[ $sum ] = $data;
-					} elseif ( is_string( $data ) ) {
-						$this->sums[ $data ] = array();
-					}
-				}
-			}
-		}
-
+		// Convert user input.
 		if ( ! is_array( $this->sums ) ) {
-			$this->sums = array_map( 'trim', explode( PHP_EOL, $this->sums ) );
+			$this->sums = array_filter( array_map( 'trim', preg_split( '/\r\n|[\r\n]|,/', $this->sums ) ) );
 		}
 
 		$this->pdo->exec( "ATTACH `{$this->new}` as db_new" );
@@ -217,6 +201,11 @@ class merge_sqlite
 		foreach ( $this->sums as $statistic_id => $data ) {
 			unset( $this->sums[ $statistic_id ] );
 			$limit = "LIMIT 1";
+
+			// User input.
+			if ( is_string( $data ) && ! is_string( $statistic_id ) ) {
+				$statistic_id = $data;
+			}
 
 			// Get the entity meta from the new database.
 			$meta = $this->pdo->query( "SELECT * FROM db_new.statistics_meta WHERE statistic_id = '{$statistic_id}'" );
