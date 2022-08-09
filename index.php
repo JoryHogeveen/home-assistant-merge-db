@@ -220,8 +220,8 @@ $files = array_filter( $files, function( $item ) {
 	</div>
 
 	<div class="form-group">
-		<label for="sums">Recalculate sums for the following entities (new line per entity):</label>
-		<textarea class="form-control" name="sums" id="sums"></textarea>
+		<label for="sums">Recalculate sums for the following entities:</label>
+		<textarea class="form-control" name="sums" id="sums" placeholder="(new line per entity)"></textarea>
 	</div>
 
 	<?php
@@ -230,7 +230,7 @@ $files = array_filter( $files, function( $item ) {
 	$steps = $class->steps;
 	?>
 	<div class="form-group">
-		<label for="steps">Select steps to be taken (default: all).</label>
+		<label for="steps">Select steps to be taken:</label>
 		<select class="form-control custom-select" name="steps" id="steps" multiple=1 size=<?= count( $steps ) ?>>
 			<?php foreach ( $steps as $step ) : ?>
 				<option value="<?= $step ?>" selected><?= $step ?></option>
