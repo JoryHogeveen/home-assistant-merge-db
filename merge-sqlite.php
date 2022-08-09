@@ -216,29 +216,70 @@ class merge_sqlite
 
 		foreach ( $this->sums as $statistic_id => $data ) {
 			unset( $this->sums[ $statistic_id ] );
-
-
-			$meta = $this->pdo->query( "SELECT * FROM main.statistics_meta WHERE statistic_id = '{$statistic_id}'" );
-
-			$metadata_id = $meta['id'];
-
-			// Get latest value of original database.
-			$where = "WHERE metadata_id = {$metadata_id}";
-			$order = "ORDER BY created DESC";
 			$limit = "LIMIT 1";
-			$org   = $this->pdo->query_row( "SELECT * FROM main.statistics {$where} {$order} {$limit}" );
+
+			// Get the entity meta from the new database.
+			$meta = $this->pdo->query( "SELECT * FROM db_new.statistics_meta WHERE statistic_id = '{$statistic_id}'" );
+			if ( ! isset( $meta['id'] ) ) {
+				$this->messages[] = array(
+					'step'     => $step,
+					'message'  => 'New entity for sum calculation not found, skip recalculation',
+					'data'     => 'db_new.statistics_meta > ' . $statistic_id,
+					'done'     => null,
+				);
+				continue;
+			}
 
 			// Get first value of new database.
-			$where = "WHERE metadata_id = " . $this->pdo->query( "SELECT * FROM db_new.statistics_meta WHERE statistic_id = '{$statistic_id}'" );
-			$order = "ORDER BY created ASC";
-			$new   = $this->pdo->query_row( "SELECT * FROM db_new.statistics {$where} {$order} {$limit}" );
+			$metadata_id = $meta['id'];
+			$where       = "WHERE metadata_id = {$metadata_id}";
+			$order       = "ORDER BY created ASC";
+			$new         = $this->pdo->query_row( "SELECT * FROM db_new.statistics {$where} {$order} {$limit}" );
+
+			if ( ! isset( $new['sum'] ) ) {
+				$this->messages[] = array(
+					'step'     => $step,
+					'message'  => 'Statistics from new entity for sum calculation not found, skip recalculation',
+					'data'     => 'db_new.statistics > ' . $statistic_id,
+					'done'     => null,
+				);
+				continue;
+			}
+
+			// Get the entity meta from the original database.
+			$meta = $this->pdo->query( "SELECT * FROM main.statistics_meta WHERE statistic_id = '{$statistic_id}'" );
+			if ( ! isset( $meta['id'] ) ) {
+				$this->messages[] = array(
+					'step'     => $step,
+					'message'  => 'Original entity for sum calculation not found, skip recalculation',
+					'data'     => 'main.statistics_meta > ' . $statistic_id,
+					'done'     => null,
+				);
+				continue;
+			}
+
+			// Get latest value of original database.
+			$metadata_id = $meta['id'];
+			$where       = "WHERE metadata_id = {$metadata_id}";
+			$order       = "ORDER BY created DESC";
+			$org         = $this->pdo->query_row( "SELECT * FROM main.statistics {$where} {$order} {$limit}" );
+
+			if ( ! isset( $org['sum'] ) ) {
+				$this->messages[] = array(
+					'step'     => $step,
+					'message'  => 'Statistics from original entity for sum calculation not found, skip recalculation',
+					'data'     => 'main.statistics > ' . $statistic_id,
+					'done'     => null,
+				);
+				continue;
+			}
 
 			$data = array(
 				'statistic_id' => $statistic_id,
 				'meta'         => $meta,
 				'org_sum'      => (float) $org['sum'],
 				'org_state'    => (float) $org['state'],
-				'new_sum'      => (float) $new['sum'],
+				'new_sum'      => (float) $new['sum'] ?? 0,
 				'new_state'    => (float) $new['state'],
 			);
 
