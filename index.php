@@ -37,6 +37,7 @@
 		});
 
 		function run() {
+			running = true;
 			if ( terminate ) {
 				running = false;
 				return;
@@ -47,7 +48,7 @@
 
 			$.ajax( {
 				type: "POST",
-				url: '/ajax.php',
+				url: 'ajax.php',
 				data: formdata,
 				dataType: 'json',
 				success: function( resp ) {
