@@ -8,7 +8,7 @@ class db_sqlite
 	/**
 	 * Constructor
 	 */
-	public function __construct( $db, $main ) {
+	public function __construct( $db, $main = null ) {
 		$this->db    = $db;
 		$this->pdo   = new PDO( 'sqlite:' . $this->db );
 		$this->main = $main;
