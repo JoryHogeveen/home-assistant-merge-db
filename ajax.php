@@ -24,10 +24,19 @@ if ( ! empty( $_POST[ 'db_new' ] ) && ! empty( $_POST[ 'db_old' ] ) ) {
 
 	require_once 'merge-sqlite.php';
 
-	$merge  = new merge_sqlite( $new, $old, $db );
-	$status = $merge->run( $steps_done, $interval );
+	$merge = new merge_sqlite( $new, $old, $db );
+	$merge->run( $steps_done, $interval, $sums );
 
-	echo json_encode( $status );
+	$return = get_object_vars( $merge );
+
+	// Prevent recurse.
+	foreach ( $return as $key => $val ) {
+		if ( is_object( $val ) ) {
+			unset( $return[ $key ] );
+		}
+	}
+
+	echo json_encode( $return );
 	die;
 }
 
