@@ -210,8 +210,16 @@ class merge_sqlite
 
 			if ( isset( $existing[ $statistic_id ] ) ) {
 				// Exists already.
+				$id     = $existing[ $statistic_id ]['id'];
+
+				$update = $this->sql_update( $row );
+
+				$this->exec( "UPDATE {$main_meta_table} SET {$update} WHERE id = {$id}" );
 			} else {
 				// New entity.
+				$insert = $this->sql_insert( $row );
+
+				$this->exec( "INSERT INTO {$main_meta_table} {$insert}" );
 			}
 		}
 
