@@ -90,7 +90,7 @@ class merge_sqlite
 			);
 		}
 
-		include 'db_sqlite.php';
+		require_once 'db-sqlite.php';
 		$this->pdo = new db_sqlite( $this->db, $this );
 
 		return true;

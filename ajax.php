@@ -17,7 +17,7 @@ if ( ! empty( $_POST[ 'db_new' ] ) && ! empty( $_POST[ 'db_old' ] ) ) {
 		}
 	}
 
-	include 'merge-sqlite.php';
+	require_once 'merge-sqlite.php';
 
 	$merge  = new merge_sqlite( $new, $old, $db );
 	$status = $merge->run( $steps_done, $interval );
