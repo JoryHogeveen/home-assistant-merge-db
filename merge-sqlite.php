@@ -35,6 +35,7 @@ class merge_sqlite
 		if ( ! $steps ) {
 			$steps = array(
 				'init_merge', // Create merge table.
+				'init_stats', // Truncate tables and cCopy old statistics and meta.
 			);
 		}
 
@@ -109,6 +110,48 @@ class merge_sqlite
 		);
 
 		$this->steps_done[ $step ] = true;
+	}
+
+	/**
+	 *  Trucate tables and copy statistics from old database.
+	 */
+	public function init_stats() {
+		$step = $this->step;
+		$done = $this->steps_done[ $step ] ?? null;
+
+		if ( true === $done ) {
+			return true;
+		}
+
+		$this->exec( "ATTACH `{$this->old}` as db_old" );
+
+		if ( ! is_numeric( $done ) ) {
+			// First step.
+
+			$this->exec( "INSERT INTO main.statistics SELECT * FROM db_old.statistics" );
+
+			$this->messages[] = array(
+				'step'     => $step,
+				'message'  => 'Old statistics copied',
+				'data'     => $this->old . '.statistics > ' . $this->db . '.statistics',
+				'done'     => 1,
+			);
+
+			$this->steps_done[ $step ] = 1;
+		} else {
+			// Last step.
+
+			$this->exec( "INSERT INTO main.statistics_meta SELECT * FROM db_old.statistics_meta" );
+
+			$this->messages[] = array(
+				'step'     => $step,
+				'message'  => 'Old statistics metadata copied',
+				'data'     => $this->old . '.statistics_meta > ' . $this->db . '.statistics_meta',
+				'done'     => true,
+			);
+
+			$this->steps_done[ $step ] = true;
+		}
 	}
 
 	public function table_exists( $table ) {
