@@ -32,6 +32,13 @@
 						steps_done = resp.steps_done;
 					}
 
+					if ( resp.hasOwnProperty( 'messages' ) ) {
+						var table = $('#status tbody');
+						$.each( resp.messages, function( key, value ) {
+							var row = '<tr><td>' + value.step + '</td><td>' + value.message + '</td><td>' + value.data + '</td><td>' + value.done + '</td></tr>';
+							table.prepend( row );
+						} );
+					}
 
 					if ( resp.hasOwnProperty( 'done' ) ) {
 						if ( ! resp.done ) {
@@ -119,5 +126,18 @@ $files = array_filter( $files, function( $item ) {
 
 
 <button id="run" type="button" class="btn btn-primary">Run</button>
+
+<hr>
+
+<table id="status" class="table text-left">
+	<thead>
+		<th>Step</th>
+		<th>Message</th>
+		<th>Data</th>
+		<th>Interval/Done</th>
+	</thead>
+	<tbody>
+	</tbody>
+</table>
 
 </div>

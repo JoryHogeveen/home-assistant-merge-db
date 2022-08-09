@@ -9,6 +9,7 @@ class merge_sqlite
 
 	public $merge_table = 'statistics_merge';
 
+	public $messages = array();
 	public $steps_done = array();
 	public $interval = array();
 	public $step = '';
