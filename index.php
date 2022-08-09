@@ -185,6 +185,20 @@ $files = array_filter( $files, function( $item ) {
 		<label for="sums">Recalculate sums for the following entities (new line per entity):</label>
 		<textarea class="form-control" name="sums" id="sums"></textarea>
 	</div>
+
+	<?php
+	include_once 'merge-sqlite.php';
+	$class = new merge_sqlite();
+	$steps = $class->steps;
+	?>
+	<div class="form-group">
+		<label for="steps">Select steps to be taken (default: all).</label>
+		<select class="form-control custom-select" name="steps" id="steps" multiple=1 size=<?= count( $steps ) ?>>
+			<?php foreach ( $steps as $step ) : ?>
+				<option value="<?= $step ?>" selected><?= $step ?></option>
+			<?php endforeach; ?>
+		</select>
+	</div>
 </form>
 
 
