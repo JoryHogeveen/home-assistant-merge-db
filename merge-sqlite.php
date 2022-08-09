@@ -11,8 +11,17 @@ class merge_sqlite
 
 	public $messages = array();
 	public $done = false;
-	public $steps_done = array();
+
 	public $step = '';
+	public $steps = array(
+		'init_merge', // Create merge table.
+		'init_stats', // Truncate tables and copy old statistics and meta.
+		'init_sums', // Load sum information for recalculation.
+		'merge_meta', // Merge old stats meta with new stats meta.
+		'merge_short_term', // Convert meta ID's from short term records.
+		'merge_long_term', // Pull long term stats from new database and convert meta.
+	);
+	public $steps_done = array();
 	public $interval = array();
 	public $sums = array();
 
@@ -28,7 +37,7 @@ class merge_sqlite
 	/**
 	 * Run merge loop.
 	 */
-	public function run( $steps_done = array(), $interval = null, $sums = null ) {
+	public function run( $steps_done = array(), $interval = null, $sums = null, $steps = null ) {
 		$this->steps_done = $steps_done;
 		$this->interval   = $interval ?? 1000;
 		$this->sums       = $sums ?? array();
@@ -39,18 +48,11 @@ class merge_sqlite
 		}
 
 		// Prepare steps to be made.
-		if ( ! $steps ) {
-			$steps = array(
-				'init_merge', // Create merge table.
-				'init_stats', // Truncate tables and copy old statistics and meta.
-				'init_sums', // Load sum information for recalculation.
-				'merge_meta', // Merge old stats meta with new stats meta.
-				'merge_short_term', // Convert meta ID's from short term records.
-				'merge_long_term', // Pull long term stats from new database and convert meta.
-			);
+		if ( $steps ) {
+			$this->steps = $steps;
 		}
 
-		foreach ( $steps as $step ) {
+		foreach ( $this->steps as $step ) {
 			if ( is_callable( array( $this, $step ) ) ) {
 				$this->step = $step;
 				$done = call_user_func( array( $this, $step ) );
