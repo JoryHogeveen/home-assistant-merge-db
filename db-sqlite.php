@@ -83,7 +83,7 @@ class db_sqlite
 		} catch ( Exception $e ) {
 			if ( isset( $this->main ) ) {
 				return $this->main->return_error( array(
-					'step'    => $this->step,
+					'step'    => $this->main->step,
 					'message' => 'SQL Exec: ' . $e->getMessage(),
 					'data'    => $sql,
 					'done'    => false,
