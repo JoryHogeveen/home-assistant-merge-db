@@ -34,6 +34,29 @@
 				$('#continue').show();
 			} );
 
+			$(document).on( 'change', '#db_old', function() {
+				var data = {
+					db: $(this).val(),
+					load_sum_entities: true,
+				}
+				$.ajax( {
+					type: "POST",
+					url: 'ajax.php',
+					data: data,
+					dataType: 'json',
+					success: function( resp ) {
+						if ( resp.hasOwnProperty( 'entities' ) ) {
+							var options = '';
+							$.each( resp.entities, function( key, value ) {
+								options += '<option value="' + value.statistic_id + '">' + value.statistic_id + ' (' + value.unit_of_measurement + ')</option>';
+							} );
+
+							$('#sums').replaceWith( '<select class="form-control custom-select" id="sums" name="sums" multiple=1 size=10>' + options + '</select>' );
+						}
+					}
+				} );
+			} );
+
 		});
 
 		function run() {
@@ -155,8 +178,7 @@ $files = array_filter( $files, function( $item ) {
 
 	<div class="form-group">
 		<label for="sums">Recalculate sums for the following entities (new line per entity):</label>
-		<textarea class="form-control" name="sums"></textarea>
-		<button id="load_entities"></button>
+		<textarea class="form-control" name="sums" id="sums"></textarea>
 	</div>
 </form>
 

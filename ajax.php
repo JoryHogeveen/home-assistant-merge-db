@@ -1,5 +1,20 @@
 <?php
 
+if ( ! empty( $_POST[ 'load_sum_entities' ] ) && ! empty( $_POST[ 'db' ] ) ) {
+	require_once 'db-sqlite.php';
+
+	$db = new db_sqlite( $_POST[ 'db' ] );
+	$results = $db->query( 'SELECT statistic_id FROM statistics_meta WHERE has_sum = 1' );
+
+	$entities = array();
+	foreach ( $results as $row ) {
+		$entities[] = $row;
+	}
+
+	echo json_encode( array( 'entities' => $entities ) );
+	die;
+}
+
 if ( ! empty( $_POST[ 'db_new' ] ) && ! empty( $_POST[ 'db_old' ] ) ) {
 	$new        = $_POST[ 'db_new' ];
 	$old        = $_POST[ 'db_old' ];
