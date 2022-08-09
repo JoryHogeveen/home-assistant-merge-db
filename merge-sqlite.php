@@ -9,10 +9,18 @@ class merge_sqlite
 
 	public $merge_table = 'statistics_merge';
 
+	public $steps_done = array();
+	public $interval = array();
+	public $step = '';
+	public $done = false;
+
 	/**
 	 * Constructor
 	 */
-	public function __construct( $new, $old, $db = null ) {
+	public function __construct( $new, $old, $db = null, $steps_done = array(), $interval = null ) {
+		$this->steps_done = $steps_done;
+		$this->interval   = $interval ?? 1000;
+
 		$this->new = $new;
 		$this->old = $old;
 		$this->db  = $db;
@@ -22,6 +30,27 @@ class merge_sqlite
 		}
 
 		$this->pdo = new PDO( 'sqlite:' . $this->db );
+
+		if ( ! $steps ) {
+			$steps = array(
+				'init_merge', // Create merge table.
+			);
+		}
+
+		foreach ( $steps as $step ) {
+			if ( is_callable( array( $this, $step ) ) ) {
+				$this->step = $step;
+				$done = call_user_func( array( $this, $step ) );
+				if ( true !== $done ) {
+					return;
+				}
+			}
+		}
+
+		// END.
+		$this->done = true;
+		return;
+	}
 
 	/**
 	 * Create (duplicate) DB if not exist.

@@ -28,6 +28,20 @@
 				data: formdata,
 				dataType: 'json',
 				success: function( resp ) {
+					if ( resp.hasOwnProperty( 'steps_done' ) ) {
+						steps_done = resp.steps_done;
+					}
+
+
+					if ( resp.hasOwnProperty( 'done' ) ) {
+						if ( ! resp.done ) {
+							formdata.db_new     = resp.new;
+							formdata.db_old     = resp.old;
+							formdata.db         = resp.db;
+							formdata.steps_done = steps_done;
+							run();
+						}
+					}
 				}
 			} ).always( function() {
 				running = false;
