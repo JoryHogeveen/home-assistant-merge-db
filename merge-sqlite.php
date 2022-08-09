@@ -38,25 +38,12 @@ class merge_sqlite
 			$this->init_db();
 		}
 
-		// Prepare entities for sum recalculation.
-		if ( $sums ) {
-			if ( ! is_array( $sums ) ) {
-				$sums = array_map( 'trim', explode( PHP_EOL, $sums ) );
-			}
-			foreach ( $sums as $sum => $data ) {
-				if ( is_string( $sum ) ) {
-					$this->sums[ $sum ] = $data;
-				} elseif ( is_string( $data ) ) {
-					$this->sums[ $data ] = array();
-				}
-			}
-		}
-
 		// Prepare steps to be made.
 		if ( ! $steps ) {
 			$steps = array(
 				'init_merge', // Create merge table.
-				'init_stats', // Truncate tables and cCopy old statistics and meta.
+				'init_stats', // Truncate tables and copy old statistics and meta.
+				'init_sums', // Load sum information for recalculation.
 				'merge_meta', // Merge old stats meta with new stats meta.
 				'merge_short_term', // Convert meta ID's from short term records.
 				'merge_long_term', // Pull long term stats from new database and convert meta.
@@ -186,6 +173,91 @@ class merge_sqlite
 
 			$this->steps_done[ $step ] = true;
 		}
+	}
+
+	/**
+	 * Load sum recalculation metadata.
+	 */
+	public function init_sums() {
+		$step = $this->step;
+		$done = $this->steps_done[ $step ] ?? null;
+
+		if ( true === $done ) {
+			return true;
+		}
+
+		if ( ! $this->sums ) {
+			$this->steps_done[ $step ] = true;
+			return true;
+		}
+
+		// Prepare entities for sum recalculation.
+		if ( $sums ) {
+			foreach ( $sums as $sum => $data ) {
+				if ( is_numeric( $sum ) && is_array( $data ) ) {
+					// Done!
+
+					break;
+				} else {
+					if ( is_string( $sum ) ) {
+						$this->sums[ $sum ] = $data;
+					} elseif ( is_string( $data ) ) {
+						$this->sums[ $data ] = array();
+					}
+				}
+			}
+		}
+
+		if ( ! is_array( $this->sums ) ) {
+			$this->sums = array_map( 'trim', explode( PHP_EOL, $this->sums ) );
+		}
+
+		$this->pdo->exec( "ATTACH `{$this->new}` as db_new" );
+
+		foreach ( $this->sums as $statistic_id => $data ) {
+			unset( $this->sums[ $statistic_id ] );
+
+
+			$meta = $this->pdo->query( "SELECT * FROM main.statistics_meta WHERE statistic_id = '{$statistic_id}'" );
+
+			$metadata_id = $meta['id'];
+
+			// Get latest value of original database.
+			$where = "WHERE metadata_id = {$metadata_id}";
+			$order = "ORDER BY created DESC";
+			$limit = "LIMIT 1";
+			$org   = $this->pdo->query_row( "SELECT * FROM main.statistics {$where} {$order} {$limit}" );
+
+			// Get first value of new database.
+			$where = "WHERE metadata_id = " . $this->pdo->query( "SELECT * FROM db_new.statistics_meta WHERE statistic_id = '{$statistic_id}'" );
+			$order = "ORDER BY created ASC";
+			$new   = $this->pdo->query_row( "SELECT * FROM db_new.statistics {$where} {$order} {$limit}" );
+
+			$data = array(
+				'statistic_id' => $statistic_id,
+				'meta'         => $meta,
+				'org_sum'      => (float) $org['sum'],
+				'org_state'    => (float) $org['state'],
+				'new_sum'      => (float) $new['sum'],
+				'new_state'    => (float) $new['state'],
+			);
+
+			// Calculate sum base for recalculation or new entries.
+			// It will be the old sum plus the difference between the old state and new state.
+			// Also subtract the new sum of the first new statistic value to compensate if it is not 0.
+			$data['sum'] = $data['org_sum'] + ( $data['new_state'] - $data['org_state'] ) - $data['new_sum'];
+
+			$this->sums[ $metadata_id ] = $data;
+		}
+
+		$this->messages[] = array(
+			'step'     => $step,
+			'message'  => 'Sums calculated',
+			'data'     => implode( ', ', array_keys( $this->sums ) ),
+			'done'     => true,
+		);
+
+		$this->steps_done[ $step ] = true;
 	}
 
 	/**
