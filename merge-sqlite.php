@@ -272,8 +272,7 @@ class merge_sqlite
 		$limit = (int) $this->interval;
 		$offset = $done * $limit;
 
-		$results = $this->query( "SELECT * FROM db_new.{$table} LIMIT {$limit} OFFSET {$offset}" );
-
+		$results     = $this->query( "SELECT * FROM db_new.{$table} LIMIT {$limit} OFFSET {$offset}" );
 		$num_results = 0;
 		foreach ( $results as $row ) {
 			$num_results++;
@@ -287,11 +286,12 @@ class merge_sqlite
 
 		if ( $num_results < $this->interval ) {
 			// Less records than the interval, must be the latest iteration.
+			$total = $this->query_num_rows( 'db_new.' . $table );
 
 			$this->messages[] = array(
 				'step'    => $step,
 				'done'    => true,
-				'message' => $table . ' all entities merged',
+				'message' => $table . ' all ' . $total . ' entities merged',
 				'data'    => $this->db,
 			);
 
@@ -448,6 +448,11 @@ class merge_sqlite
 			}
 		}
 		return null;
+	}
+
+	public function query_num_rows( $table ) {
+		$results = $this->pdo->query( "SELECT COUNT(*) FROM {$table}", PDO::FETCH_NUM )->fetch();
+		return reset( $results );
 	}
 
 	public function return_error( $message ) {
