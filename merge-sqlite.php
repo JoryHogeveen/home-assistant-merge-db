@@ -422,6 +422,11 @@ class merge_sqlite
 			unset( $row['id'] );
 			$row['metadata_id'] = $this->convert_id( $row['metadata_id'] );
 
+			// Recalculate sum.
+			if ( ! empty( $this->sums[ $row['metadata_id'] ] ) ) {
+				$row['sum'] = $this->sums[ $row['metadata_id'] ]['sum'] + (float) $row['sum'];
+			}
+
 			$insert = $this->pdo->sql_insert( $row );
 
 			$this->pdo->exec( "INSERT INTO main.{$table} {$insert}" );
