@@ -427,7 +427,7 @@ class merge_sqlite
 			$done = 0;
 		}
 
-		$limit = (int) $this->interval;
+		$limit  = (int) $this->interval;
 		$offset = $done * $limit;
 
 		$results     = $this->pdo->query( "SELECT * FROM db_new.{$table} LIMIT {$limit} OFFSET {$offset}" );
