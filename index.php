@@ -21,6 +21,17 @@
 			if ( ! formdata ) {
 				formdata = $('#form').serializeObject();
 			}
+
+			$.ajax( {
+				type: "POST",
+				url: '/ajax.php',
+				data: formdata,
+				dataType: 'json',
+				success: function( resp ) {
+				}
+			} ).always( function() {
+				running = false;
+			} );
 		}
 
 	    if ('function' !== typeof $.fn.serializeObject) {
