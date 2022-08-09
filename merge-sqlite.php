@@ -225,6 +225,48 @@ class merge_sqlite
 		$this->steps_done[ $step ] = true;
 	}
 
+
+	public function sql_update( $row ) {
+		$row = $this->sql_parse_row( $row );
+
+		$update = array();
+		foreach ( $row as $key => $value ) {
+			$update[] = $key . ' = ' . $value;
+		}
+		$update  = implode( ', ', $update );
+
+		return $update;
+	}
+
+	public function sql_insert( $row ) {
+		$row     = $this->sql_parse_row( $row );
+		$columns = array_keys( $row );
+
+		$columns = implode( ',', $columns );
+		$values  = implode( ',', $row );
+
+		return "({$columns}) VALUES ({$values})";
+	}
+
+	public function sql_parse_row( $row ) {
+		foreach ( $row as $key => $value ) {
+			if ( is_numeric( $value ) ) {
+				$value = (float) $value;
+				if ( $value == (int) $value ) {
+					$value = (int) $value;
+				}
+				$row[ $key ] = $value;
+			} else {
+				if ( $value ) {
+					$row[ $key ] = '"' . $value . '"';
+				} else {
+					$row[ $key ] = 'NULL';
+				}
+			}
+		}
+		return $row;
+	}
+
 	public function table_exists( $table ) {
 		$tables = $this->list_tables();
 		return in_array( $table, $tables, true );
