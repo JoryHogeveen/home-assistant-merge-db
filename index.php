@@ -1,4 +1,57 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.4.1/dist/css/bootstrap.min.css" integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh" crossorigin="anonymous">
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script>
+	(function ($) {
+
+		var running    = false,
+			formdata   = null,
+			steps_done = {};
+
+		jQuery(document).ready(function() {
+			$(document).on( 'click', '#run', function(e) {
+				e.preventDefault();
+				formdata = null; // Reset.
+				if ( ! running ) {
+					run();
+				}
+			} );
+		});
+
+		function run() {
+			if ( ! formdata ) {
+				formdata = $('#form').serializeObject();
+			}
+		}
+
+	    if ('function' !== typeof $.fn.serializeObject) {
+	        $.fn.serializeObject = function () {
+	            "use strict";
+
+	            var result = {};
+	            var extend = function (i, element) {
+	                var node = result[element.name];
+
+	                // If node with same name exists already, need to convert it to an array as it
+	                // is a multi-value field (i.e., checkboxes)
+
+	                if ('undefined' !== typeof node && node !== null) {
+	                    if ($.isArray(node)) {
+	                        node.push(element.value);
+	                    } else {
+	                        result[element.name] = [node, element.value];
+	                    }
+	                } else {
+	                    result[element.name] = element.value;
+	                }
+	            };
+
+	            $.each(this.serializeArray(), extend);
+	            return result;
+	        };
+	    }
+	})(jQuery);
+
+</script>
 
 <?php
 $files = scandir( dirname( __FILE__ ) );
