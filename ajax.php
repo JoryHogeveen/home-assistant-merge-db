@@ -30,3 +30,14 @@ if ( ! empty( $_POST[ 'db_new' ] ) && ! empty( $_POST[ 'db_old' ] ) ) {
 	echo json_encode( $status );
 	die;
 }
+
+$obj = new stdClass();
+$obj->messages = array();
+$obj->messages[] = array(
+	'step'    => 'ajax',
+	'message' => 'Please provide parameters',
+	'data'    => var_export( $_POST, true ),
+	'done'    => false,
+);
+echo json_encode( $obj );
+die;
