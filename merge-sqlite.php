@@ -176,6 +176,24 @@ class merge_sqlite
 		$current = $this->query( "SELECT * FROM {$main_meta_table}" );
 		$results = $this->query( "SELECT * FROM db_new.{$meta_table}" );
 
+		if ( ! $results ) {
+			return $this->return_error( array(
+				'step'    => $step,
+				'done'    => false,
+				'message' => 'Error Loading statistics_meta',
+				'data'    => $this->new,
+			) );
+		}
+
+		if ( ! $current ) {
+			return $this->return_error( array(
+				'step'    => $step,
+				'done'    => false,
+				'message' => 'Error Loading statistics_meta',
+				'data'    => $this->db,
+			) );
+		}
+
 		$existing = array();
 		foreach ( $current as $row ) {
 			$existing[ $row['statistic_id'] ] = $row;
