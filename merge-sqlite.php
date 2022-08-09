@@ -204,7 +204,7 @@ class merge_sqlite
 
 		$this->pdo->exec( "ATTACH `{$this->new}` as db_new" );
 
-		$message_data = array();
+		$log = array();
 
 		foreach ( $this->sums as $statistic_id => $data ) {
 			unset( $this->sums[ $statistic_id ] );
@@ -222,7 +222,8 @@ class merge_sqlite
 				$this->messages[] = array(
 					'step'     => $step,
 					'message'  => 'New entity for sum calculation not found, skip recalculation',
-					'data'     => 'db_new.statistics_meta > ' . $statistic_id . var_export( $meta, true ),
+					'data'     => 'db_new.statistics_meta > ' . $statistic_id,
+					'log'      => var_export( $meta, true ),
 					'done'     => null,
 				);
 				continue;
@@ -232,6 +233,7 @@ class merge_sqlite
 					'step'     => $step,
 					'message'  => 'New entity does not support sum',
 					'data'     => 'db_new.statistics_meta > ' . $statistic_id,
+					'log'      => var_export( $meta, true ),
 					'done'     => null,
 				);
 				continue;
@@ -248,6 +250,7 @@ class merge_sqlite
 					'step'     => $step,
 					'message'  => 'Statistics from new entity for sum calculation not found, skip recalculation',
 					'data'     => 'db_new.statistics > ' . $statistic_id,
+					'log'      => var_export( $new, true ),
 					'done'     => null,
 				);
 				continue;
@@ -260,6 +263,7 @@ class merge_sqlite
 					'step'     => $step,
 					'message'  => 'Original entity for sum calculation not found, skip recalculation',
 					'data'     => 'main.statistics_meta > ' . $statistic_id,
+					'log'      => var_export( $meta, true ),
 					'done'     => null,
 				);
 				continue;
@@ -269,6 +273,7 @@ class merge_sqlite
 					'step'     => $step,
 					'message'  => 'Original entity does not support sum',
 					'data'     => 'db_new.statistics_meta > ' . $statistic_id,
+					'log'      => var_export( $meta, true ),
 					'done'     => null,
 				);
 				continue;
@@ -306,14 +311,15 @@ class merge_sqlite
 
 			$this->sums[ $metadata_id ] = $data;
 
-			$message_data[] = "{$statistic_id} ({$metadata_id}) = " . $data['sum'];
+			$log[] = "{$statistic_id} (ID: {$metadata_id}) =SUM " . $data['sum'];
 		}
 
 		$this->messages[] = array(
 			'step'     => $step,
-			'message'  => 'Sums calculated',
-			'data'     => implode( '<br>', $message_data ),
 			'done'     => true,
+			'message'  => 'Sums calculated',
+			'data'     => $this->db,
+			'log'      => $log,
 		);
 
 		$this->steps_done[ $step ] = true;
@@ -362,6 +368,11 @@ class merge_sqlite
 			$existing[ $row['statistic_id'] ] = $row;
 		}
 
+		$log = array(
+			'updated' => 0,
+			'added'   => 0,
+		);
+
 		foreach ( $results as $result ) {
 			$org_id       = $result['id'];
 			$statistic_id = $result['statistic_id'];
@@ -376,6 +387,8 @@ class merge_sqlite
 				$update = $this->pdo->sql_update( $row );
 
 				$this->pdo->exec( "UPDATE {$main_meta_table} SET {$update} WHERE id = {$id}" );
+
+				$log['updated']++;
 			} else {
 				// New entity.
 				$insert = $this->pdo->sql_insert( $row );
@@ -383,6 +396,8 @@ class merge_sqlite
 				$this->pdo->exec( "INSERT INTO {$main_meta_table} {$insert}" );
 
 				$id = $this->pdo->query_value( "SELECT id FROM {$main_meta_table} WHERE statistic_id = '{$statistic_id}'" );
+
+				$log['added']++;
 			}
 
 			$this->pdo->exec( "INSERT INTO {$this->merge_table} VALUES ( {$id}, {$org_id}, '{$statistic_id}' )" );
@@ -393,6 +408,7 @@ class merge_sqlite
 			'done'    => true,
 			'message' => 'statistics_meta entities merged',
 			'data'    => $this->db,
+			'log'     => $log,
 		);
 
 		$this->steps_done[ $step ] = true;
@@ -438,10 +454,7 @@ class merge_sqlite
 		$results     = $this->pdo->query( "SELECT * FROM db_new.{$table} LIMIT {$limit} OFFSET {$offset}" );
 		$num_results = 0;
 
-		$message_data = array(
-			'db'             => $this->db,
-			'recalculations' => array(),
-		);
+		$log = array();
 
 		foreach ( $results as $row ) {
 			$num_results++;
@@ -454,27 +467,15 @@ class merge_sqlite
 
 				$statistic_id = $this->sums[ $row['metadata_id'] ]['statistic_id'];
 				$data_key     = $statistic_id . ' (' . $row['metadata_id'] . ')';
-				if ( ! isset( $message_data['recalculations'][ $data_key ] ) ) {
-					$message_data['recalculations'][ $data_key ] = 0;
+				if ( ! isset( $log[ $data_key ] ) ) {
+					$log[ $data_key ] = 0;
 				}
-				$message_data['recalculations'][ $data_key ]++;
+				$log[ $data_key ]++;
 			}
 
 			$insert = $this->pdo->sql_insert( $row );
 
 			$this->pdo->exec( "INSERT INTO main.{$table} {$insert}" );
-		}
-
-		foreach ( $message_data as $key => $value ) {
-			if ( 'recalculations' === $key && $value ) {
-				$message_data[ $key ] = array(
-					'Recalculations:'
-				);
-				foreach ( $value as $id => $count ) {
-					$message_data[ $key ][] = $id . ' > ' . $count;
-				}
-				$message_data[ $key ] = implode( '<br>', $message_data[ $key ] );
-			}
 		}
 
 		if ( $num_results < $this->interval ) {
@@ -485,7 +486,8 @@ class merge_sqlite
 				'step'    => $step,
 				'done'    => true,
 				'message' => $table . ' all ' . $total . ' entities merged',
-				'data'    => implode( '<br>', $message_data ),
+				'data'    => $this->db,
+				'log'     => $log,
 			);
 
 			$this->steps_done[ $step ] = true;
@@ -498,7 +500,8 @@ class merge_sqlite
 				'step'    => $step,
 				'done'    => $done,
 				'message' => "{$table} entities {$offset} to {$entities_done} merged",
-				'data'    => implode( '<br>', $message_data ),
+				'data'    => $this->db,
+				'log'     => $log,
 			);
 
 			$this->steps_done[ $step ] = $done;
@@ -513,7 +516,8 @@ class merge_sqlite
 			$this->return_error( array(
 				'step'    => $this->step,
 				'message' => 'Could not convert ID: ' . $id_org,
-				'data'    => var_export( $context, true ) . ' | ' . $sql,
+				'data'    => $sql,
+				'log'     => var_export( $context, true ),
 				'done'    => false,
 			) );
 
