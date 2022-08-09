@@ -75,6 +75,15 @@ class db_sqlite
 	public function truncate_table( $table ) {
 		// "TRUNCATE TABLE {$table}"
 		$this->pdo->exec( "DELETE FROM {$table}" );
+
+		if ( isset( $this->main ) ) {
+			$this->main->messages[] = array(
+				'step'    => $this->main->step,
+				'message' => 'Table truncated',
+				'data'    => $table,
+				'done'    => true,
+			);
+		}
 	}
 
 	public function exec( $sql ) {
