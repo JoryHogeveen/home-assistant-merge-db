@@ -277,7 +277,26 @@ class merge_sqlite
 		$num_results = 0;
 		foreach ( $results as $row ) {
 			$num_results++;
+			$row['metadata_id'] = $this->convert_id( $row['metadata_id'] );
 		}
+	}
+
+	public function convert_id( $id_org, $context = null ) {
+		$sql = "SELECT id FROM main.statistics_merge WHERE id_org = {$id_org}";
+		$id  = $this->query_value( $sql );
+
+		if ( ! $id ) {
+			$this->return_error( array(
+				'step'    => $this->step,
+				'message' => 'Could not convert ID: ' . $id_org,
+				'data'    => var_export( $context, true ) . ' | ' . $sql,
+				'done'    => false,
+			) );
+
+			$id = $id_org;
+		}
+
+		return $id;
 	}
 
 	public function sql_update( $row ) {
