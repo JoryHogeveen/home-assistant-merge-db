@@ -176,6 +176,8 @@ class merge_sqlite
 		$current = $this->query( "SELECT * FROM {$main_meta_table}" );
 		$results = $this->query( "SELECT * FROM db_new.{$meta_table}" );
 
+		$this->truncate_table( $this->merge_table );
+
 		if ( ! $results ) {
 			return $this->return_error( array(
 				'step'    => $step,
