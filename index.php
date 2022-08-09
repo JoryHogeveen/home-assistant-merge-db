@@ -69,6 +69,7 @@
 							formdata.db_new     = resp.new;
 							formdata.db_old     = resp.old;
 							formdata.db         = resp.db;
+							formdata.sums       = resp.sums;
 							formdata.steps_done = steps_done;
 							run();
 						}
