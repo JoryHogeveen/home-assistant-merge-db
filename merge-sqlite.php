@@ -390,7 +390,7 @@ class merge_sqlite
 	 * Copy and convert short term statistics (convert metadata ID).
 	 */
 	public function merge_short_term() {
-		$this->truncate_table( 'main.statistics_short_term' );
+		$this->pdo->truncate_table( 'main.statistics_short_term' );
 		return $this->merge_records( 'statistics_short_term' );
 	}
 
