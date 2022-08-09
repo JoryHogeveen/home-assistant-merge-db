@@ -5,6 +5,8 @@ class merge_sqlite
 	public $old = null;
 	public $db = null;
 
+	public $pdo = null;
+
 	/**
 	 * Constructor
 	 */
@@ -16,6 +18,8 @@ class merge_sqlite
 		if ( ! $this->db || ! file_exists( dirname( __FILE__ ) . DIRECTORY_SEPARATOR . $this->db ) ) {
 			$this->init_db();
 		}
+
+		$this->pdo = new PDO( 'sqlite:' . $this->db );
 
 	/**
 	 * Create (duplicate) DB if not exist.
