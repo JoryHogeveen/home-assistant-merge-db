@@ -4,20 +4,43 @@
 	(function ($) {
 
 		var running    = false,
+			terminate  = false,
 			formdata   = null,
 			steps_done = {};
 
 		jQuery(document).ready(function() {
+
+			$('#continue').hide();
+
 			$(document).on( 'click', '#run', function(e) {
 				e.preventDefault();
+				terminate = false;
 				formdata = null; // Reset.
 				if ( ! running ) {
 					run();
 				}
 			} );
+
+			$(document).on( 'click', '#continue', function(e) {
+				e.preventDefault();
+				terminate = false;
+				run();
+				$('#continue').hide();
+			} );
+
+			$(document).on( 'click', '#stop', function(e) {
+				e.preventDefault();
+				terminate = true;
+				$('#continue').show();
+			} );
+
 		});
 
 		function run() {
+			if ( terminate ) {
+				running = false;
+				return;
+			}
 			if ( ! formdata ) {
 				formdata = $('#form').serializeObject();
 			}
@@ -131,6 +154,8 @@ $files = array_filter( $files, function( $item ) {
 
 
 <button id="run" type="button" class="btn btn-primary">Run</button>
+<button id="stop" type="button" class="btn btn-secondary">Stop</button>
+<button id="continue" type="button" class="btn btn-secondary">Continue</button>
 
 <hr>
 
