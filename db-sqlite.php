@@ -109,6 +109,14 @@ class db_sqlite
 		}
 	}
 
+	public function query_row( $sql ) {
+		$rows = $this->query( $sql );
+		if ( $rows ) {
+			return reset( $rows );
+		}
+		return null;
+	}
+
 	public function query_value( $sql ) {
 		$rows = $this->query( $sql );
 		if ( $rows ) {
