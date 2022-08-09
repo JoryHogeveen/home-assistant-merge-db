@@ -277,7 +277,12 @@ class merge_sqlite
 		$num_results = 0;
 		foreach ( $results as $row ) {
 			$num_results++;
+			unset( $row['id'] );
 			$row['metadata_id'] = $this->convert_id( $row['metadata_id'] );
+
+			$insert = $this->sql_insert( $row );
+
+			$this->exec( "INSERT INTO main.{$table} {$insert}" );
 		}
 	}
 
