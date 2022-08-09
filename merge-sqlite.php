@@ -1,4 +1,7 @@
 <?php
+// Fix float sum calculations.
+ini_set('precision', 16);
+
 class merge_sqlite
 {
 	public $new = null;
