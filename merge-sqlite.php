@@ -145,7 +145,7 @@ class merge_sqlite
 		if ( ! is_numeric( $done ) ) {
 			// First step.
 
-			$this->truncate_table( 'main.statistics' );
+			$this->pdo->truncate_table( 'main.statistics' );
 
 			$this->pdo->exec( "INSERT INTO main.statistics SELECT * FROM db_old.statistics" );
 
@@ -160,7 +160,7 @@ class merge_sqlite
 		} else {
 			// Last step.
 
-			$this->truncate_table( 'main.statistics_meta' );
+			$this->pdo->truncate_table( 'main.statistics_meta' );
 
 			$this->pdo->exec( "INSERT INTO main.statistics_meta SELECT * FROM db_old.statistics_meta" );
 
