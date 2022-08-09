@@ -202,6 +202,8 @@ class merge_sqlite
 
 		$this->pdo->exec( "ATTACH `{$this->new}` as db_new" );
 
+		$message_data = array();
+
 		foreach ( $this->sums as $statistic_id => $data ) {
 			unset( $this->sums[ $statistic_id ] );
 			$limit = "LIMIT 1";
@@ -301,12 +303,14 @@ class merge_sqlite
 			$data['sum'] = $data['org_sum'] + ( $data['new_state'] - $data['org_state'] ) - $data['new_sum'];
 
 			$this->sums[ $metadata_id ] = $data;
+
+			$message_data[] = "{$statistic_id} ({$metadata_id}) = " . $data['sum'];
 		}
 
 		$this->messages[] = array(
 			'step'     => $step,
 			'message'  => 'Sums calculated',
-			'data'     => implode( ', ', array_keys( $this->sums ) ),
+			'data'     => implode( '<br>', $message_data ),
 			'done'     => true,
 		);
 
