@@ -112,7 +112,9 @@ class db_sqlite
 	public function query_row( $sql ) {
 		$rows = $this->query( $sql );
 		if ( $rows ) {
-			return reset( $rows );
+			foreach ( $rows as $row ) {
+				return $row;
+			}
 		}
 		return null;
 	}
