@@ -19,7 +19,8 @@ if ( ! empty( $_POST[ 'db_new' ] ) && ! empty( $_POST[ 'db_old' ] ) ) {
 
 	include 'merge-sqlite.php';
 
-	$status = new merge_sqlite( $new, $old, $db, $steps_done, $interval );
+	$merge  = new merge_sqlite( $new, $old, $db );
+	$status = $merge->run( $steps_done, $interval );
 
 	echo json_encode( $status );
 	die;
