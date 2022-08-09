@@ -220,7 +220,11 @@ class merge_sqlite
 				$insert = $this->sql_insert( $row );
 
 				$this->exec( "INSERT INTO {$main_meta_table} {$insert}" );
+
+				$id = $this->query_value( "SELECT id FROM {$main_meta_table} WHERE statistic_id = '{$statistic_id}'" );
 			}
+
+			$this->exec( "INSERT INTO {$this->merge_table} VALUES ( {$id}, {$org_id}, '{$statistic_id}' )" );
 		}
 
 		$this->messages[] = array(
