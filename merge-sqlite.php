@@ -128,6 +128,8 @@ class merge_sqlite
 		if ( ! is_numeric( $done ) ) {
 			// First step.
 
+			$this->truncate_statistics();
+
 			$this->exec( "INSERT INTO main.statistics SELECT * FROM db_old.statistics" );
 
 			$this->messages[] = array(
@@ -169,6 +171,32 @@ class merge_sqlite
 			}
 		}
 		return $return;
+	}
+
+	public function truncate_statistics() {
+		$tables = array(
+			'statistics',
+			'statistics_meta',
+			'statistics_short_term', // Needs ID merge.
+			//'statistics_runs', // No need.
+		);
+
+		foreach ( $tables as $table ) {
+			$this->truncate_table( $table );
+		}
+
+		$this->messages[] = array(
+			'step'    => $this->step,
+			'message' => 'Tables truncated',
+			'data'    => implode( ', ', $tables ),
+			'done'    => 0,
+		);
+		return true;
+	}
+
+	public function truncate_table( $table ) {
+		// "TRUNCATE TABLE {$table}"
+		$this->pdo->exec( "DELETE FROM {$table}" );
 	}
 	}
 }
