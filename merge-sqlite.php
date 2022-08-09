@@ -284,6 +284,32 @@ class merge_sqlite
 
 			$this->exec( "INSERT INTO main.{$table} {$insert}" );
 		}
+
+		if ( $num_results < $this->interval ) {
+			// Less records than the interval, must be the latest iteration.
+
+			$this->messages[] = array(
+				'step'    => $step,
+				'done'    => true,
+				'message' => $table . ' all entities merged',
+				'data'    => $this->db,
+			);
+
+			$this->steps_done[ $step ] = true;
+		} else {
+			$done++;
+
+			$entities_done = $offset + $limit;
+
+			$this->messages[] = array(
+				'step'    => $step,
+				'done'    => $done,
+				'message' => "{$table} entities {$offset} to {$entities_done} merged",
+				'data'    => $this->db,
+			);
+
+			$this->steps_done[ $step ] = $done;
+		}
 	}
 
 	public function convert_id( $id_org, $context = null ) {
