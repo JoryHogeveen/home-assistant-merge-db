@@ -12,4 +12,5 @@ Simple tool to merge two HA sqlite DB's in case of a corrupted file
 - Close the docker-compose terminal with `Ctrl+C` and run `docker-compose down` to clean up
 - Done!
 
-For me all of the old data is now longterm statistics, but I'm not sure if that's always the case. Just looks weird for one day in most views.
+### Troubleshooting
+All the data from the corrupt database is now "long-term statistics" in Home Assistant. This means that it will not show up in the normal views, but you can still access it via "show more" on most cards or entities.
