@@ -12,5 +12,8 @@ Simple tool to merge two HA sqlite DB's in case of a corrupted file
 - Close the docker-compose terminal with `Ctrl+C` and run `docker-compose down` to clean up
 - Done!
 
+### Do it manually
+You can also use your own webserver to host the files manually, just copy the `src` directory to your webserver and do webserver things with it. If you want to go this route you probably know what you are doing.
+
 ### Troubleshooting
 All the data from the corrupt database is now "long-term statistics" in Home Assistant. This means that it will not show up in the normal views, but you can still access it via "show more" on most cards or entities.
