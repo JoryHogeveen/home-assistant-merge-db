@@ -1,0 +1,9 @@
+services:
+  apache:
+    image: php:8.2-apache
+    restart: always
+    container_name: apache
+    ports:
+      - "9000:80"
+    volumes:
+      - ./src:/var/www/html
